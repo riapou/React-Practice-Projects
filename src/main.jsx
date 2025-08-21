@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import App from './App.jsx'
 import Todo from './components/Todo.jsx'
+import Counter from './components/Counter.jsx'
 import './index.css'
 
 createRoot(document.getElementById('root')).render(
@@ -11,7 +12,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route index element={<App />} />
         <Route path='/todo' element={<Todo />} />
-        <Route path='/todo' element={<Todo />} />
+        <Route path='/counter' element={<Counter />} />
         <Route path='/todo' element={<Todo />} />
       </Routes>
     </BrowserRouter>

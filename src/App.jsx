@@ -10,9 +10,9 @@ export default function HomePage() {
     },
     {
       id: 2,
-      title: "Weather Dashboard",
+      title: "Counter App",
       description: "Check real-time weather data using an API.",
-      link: "/projects/weather",
+      link: "/Counter",
     },
     {
       id: 3,
