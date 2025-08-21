@@ -1,57 +1,285 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 
+// Task Item Component (memoized to prevent unnecessary re-renders)
+const TaskItem = React.memo(({ task, onToggle, onDelete, onEdit }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(task.text)
+
+  const handleSave = useCallback(() => {
+    if (editText.trim()) {
+      onEdit(task.id, editText)
+      setIsEditing(false)
+    }
+  }, [editText, task.id, onEdit])
+
+  const handleCancel = useCallback(() => {
+    setEditText(task.text)
+    setIsEditing(false)
+  }, [task.text])
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Enter') {
+        handleSave()
+      } else if (e.key === 'Escape') {
+        handleCancel()
+      }
+    },
+    [handleSave, handleCancel]
+  )
+
+  useEffect(() => {
+    setEditText(task.text)
+  }, [task.text])
+
+  if (isEditing) {
+    return (
+      <li
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '10px 14px',
+          background: '#1f2937',
+          borderRadius: '10px',
+          color: '#e5e7eb',
+          gap: '8px',
+        }}
+      >
+        <input
+          type='text'
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          style={{
+            flex: 1,
+            padding: '8px',
+            borderRadius: '8px',
+            border: '1px solid #374151',
+            background: '#0b1220',
+            color: '#e5e7eb',
+          }}
+        />
+        <button
+          onClick={handleSave}
+          type='button'
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#22c55e',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+          title='Save'
+        >
+          ✅
+        </button>
+        <button
+          onClick={handleCancel}
+          type='button'
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#ef4444',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+          title='Cancel'
+        >
+          ❌
+        </button>
+      </li>
+    )
+  }
+
+  return (
+    <li
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 14px',
+        background: '#1f2937',
+        borderRadius: '10px',
+        color: '#e5e7eb',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+        <input
+          type='checkbox'
+          checked={task.completed}
+          onChange={() => onToggle(task.id)}
+          style={{
+            marginRight: '10px',
+            cursor: 'pointer',
+            width: '18px',
+            height: '18px',
+          }}
+        />
+        <span
+          style={{
+            textDecoration: task.completed ? 'line-through' : 'none',
+            color: task.completed ? '#94a3b8' : '#e5e7eb',
+            cursor: 'pointer',
+          }}
+          onDoubleClick={() => setIsEditing(true)}
+        >
+          {task.text}
+        </span>
+      </div>
+      <div>
+        <button
+          onClick={() => setIsEditing(true)}
+          type='button'
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#cbd5e1',
+            cursor: 'pointer',
+            marginRight: '8px',
+            padding: '4px',
+          }}
+          title='Edit'
+        >
+          ✏️
+        </button>
+        <button
+          onClick={() => onDelete(task.id)}
+          type='button'
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#ef4444',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+          title='Delete'
+        >
+          🗑️
+        </button>
+      </div>
+    </li>
+  )
+})
+
+// Filter Buttons Component
+const FilterButtons = React.memo(({ filter, setFilter }) => {
+  const filters = [
+    { key: 'all', label: 'All' },
+    { key: 'active', label: 'Active' },
+    { key: 'completed', label: 'Completed' },
+  ]
+
+  return (
+    <nav
+      aria-label='Filters'
+      style={{
+        display: 'flex',
+        gap: '8px',
+        marginBottom: '16px',
+        flexWrap: 'wrap',
+      }}
+    >
+      {filters.map(({ key, label }) => (
+        <button
+          key={key}
+          onClick={() => setFilter(key)}
+          data-filter={key}
+          style={{
+            padding: '8px 12px',
+            borderRadius: '999px',
+            border: '1px solid #374151',
+            background: filter === key ? '#374151' : '#0b1220',
+            color: '#cbd5e1',
+            cursor: 'pointer',
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
+  )
+})
+
+// Main TodoApp Component
 export default function TodoApp() {
   const [inputValue, setInputValue] = useState('')
-  const [tasks, setTasks] = useState([])
+  const [tasks, setTasks] = useState(() => {
+    // Load tasks from localStorage if available
+    try {
+      const savedTasks = localStorage.getItem('todoTasks')
+      return savedTasks ? JSON.parse(savedTasks) : []
+    } catch {
+      return []
+    }
+  })
   const [filter, setFilter] = useState('all')
-  const [editTaskId, setEditTaskId] = useState(null)
-  const [editTaskText, setEditTaskText] = useState('')
+
+  // Save tasks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('todoTasks', JSON.stringify(tasks))
+  }, [tasks])
 
   // Filter tasks based on current filter
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'active') return !task.completed
-    if (filter === 'completed') return task.completed
-    return true // 'all' filter
-  })
+  const filteredTasks = useMemo(() => {
+    if (filter === 'active') return tasks.filter((task) => !task.completed)
+    if (filter === 'completed') return tasks.filter((task) => task.completed)
+    return tasks
+  }, [tasks, filter])
 
   // Count active tasks
-  const activeTasksCount = tasks.filter(task => !task.completed).length
+  const activeTasksCount = useMemo(
+    () => tasks.filter((task) => !task.completed).length,
+    [tasks]
+  )
 
-  // Clear completed tasks
-  const clearCompleted = () => {
-    setTasks(tasks.filter(task => !task.completed))
-  }
-
-  // Handle task editing
-  const startEdit = (task) => {
-    setEditTaskId(task.id)
-    setEditTaskText(task.text)
-  }
-
-  const saveEdit = () => {
-    if (editTaskText.trim()) {
-      setTasks(tasks.map(task => 
-        task.id === editTaskId ? { ...task, text: editTaskText } : task
-      ))
-    }
-    setEditTaskId(null)
-  }
-
-  const cancelEdit = () => {
-    setEditTaskId(null)
-  }
+  // Add new task
+  const addTask = useCallback(
+    (e) => {
+      e.preventDefault()
+      if (inputValue.trim()) {
+        setTasks((prevTasks) => [
+          ...prevTasks,
+          {
+            id: Date.now(),
+            text: inputValue,
+            completed: false,
+          },
+        ])
+        setInputValue('')
+      }
+    },
+    [inputValue]
+  )
 
   // Toggle task completion
-  const toggleTask = (id) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ))
-  }
+  const toggleTask = useCallback((id) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    )
+  }, [])
 
   // Delete task
-  const deleteTask = (id) => {
-    setTasks(tasks.filter(task => task.id !== id))
-  }
+  const deleteTask = useCallback((id) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id))
+  }, [])
+
+  // Edit task text
+  const editTask = useCallback((id, newText) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, text: newText } : task
+      )
+    )
+  }, [])
+
+  // Clear completed tasks
+  const clearCompleted = useCallback(() => {
+    setTasks((prevTasks) => prevTasks.filter((task) => !task.completed))
+  }, [])
 
   return (
     <div
@@ -108,20 +336,7 @@ export default function TodoApp() {
 
       {/* Add new task */}
       <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (inputValue.trim()) {
-            setTasks([
-              ...tasks,
-              {
-                id: Date.now(),
-                text: inputValue,
-                completed: false,
-              },
-            ])
-            setInputValue('')
-          }
-        }}
+        onSubmit={addTask}
         id='addForm'
         autoComplete='off'
         style={{
@@ -185,58 +400,7 @@ export default function TodoApp() {
       </form>
 
       {/* Filters */}
-      <nav
-        aria-label='Filters'
-        style={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: '16px',
-          flexWrap: 'wrap',
-        }}
-      >
-        <button
-          onClick={() => setFilter('all')}
-          data-filter='all'
-          style={{
-            padding: '8px 12px',
-            borderRadius: '999px',
-            border: '1px solid #374151',
-            background: filter === 'all' ? '#374151' : '#0b1220',
-            color: '#cbd5e1',
-            cursor: 'pointer',
-          }}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilter('active')}
-          data-filter='active'
-          style={{
-            padding: '8px 12px',
-            borderRadius: '999px',
-            border: '1px solid #374151',
-            background: filter === 'active' ? '#374151' : '#0b1220',
-            color: '#cbd5e1',
-            cursor: 'pointer',
-          }}
-        >
-          Active
-        </button>
-        <button
-          onClick={() => setFilter('completed')}
-          data-filter='completed'
-          style={{
-            padding: '8px 12px',
-            borderRadius: '999px',
-            border: '1px solid #374151',
-            background: filter === 'completed' ? '#374151' : '#0b1220',
-            color: '#cbd5e1',
-            cursor: 'pointer',
-          }}
-        >
-          Completed
-        </button>
-      </nav>
+      <FilterButtons filter={filter} setFilter={setFilter} />
 
       {/* List */}
       <ul
@@ -271,129 +435,13 @@ export default function TodoApp() {
           </li>
         ) : (
           filteredTasks.map((task) => (
-            <li
+            <TaskItem
               key={task.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                background: '#1f2937',
-                borderRadius: '10px',
-                color: '#e5e7eb',
-                transition: 'opacity 0.2s',
-                opacity: task.completed ? 0.7 : 1,
-              }}
-            >
-              {editTaskId === task.id ? (
-                <>
-                  <input
-                    type='text'
-                    value={editTaskText}
-                    onChange={(e) => {
-                      setEditTaskText(e.target.value)
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        saveEdit()
-                      } else if (e.key === 'Escape') {
-                        cancelEdit()
-                      }
-                    }}
-                    autoFocus
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '8px',
-                      border: '1px solid #374151',
-                      background: '#0b1220',
-                      color: '#e5e7eb',
-                    }}
-                  />
-                  <button
-                    onClick={saveEdit}
-                    type='button'
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#22c55e',
-                      cursor: 'pointer',
-                      marginLeft: '8px',
-                    }}
-                    title='Save'
-                  >
-                    ✅
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    type='button'
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#ef4444',
-                      cursor: 'pointer',
-                    }}
-                    title='Cancel'
-                  >
-                    ❌
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                    <input
-                      type='checkbox'
-                      checked={task.completed}
-                      onChange={() => toggleTask(task.id)}
-                      style={{
-                        marginRight: '10px',
-                        cursor: 'pointer',
-                        width: '18px',
-                        height: '18px',
-                      }}
-                    />
-                    <span
-                      style={{
-                        textDecoration: task.completed ? 'line-through' : 'none',
-                        color: task.completed ? '#94a3b8' : '#e5e7eb',
-                      }}
-                      onDoubleClick={() => startEdit(task)}
-                    >
-                      {task.text}
-                    </span>
-                  </div>
-                  <div>
-                    <button
-                      onClick={() => startEdit(task)}
-                      type='button'
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#cbd5e1',
-                        cursor: 'pointer',
-                        marginRight: '8px',
-                      }}
-                      title='Edit'
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      type='button'
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                      }}
-                      title='Delete'
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </>
-              )}
-            </li>
+              task={task}
+              onToggle={toggleTask}
+              onDelete={deleteTask}
+              onEdit={editTask}
+            />
           ))
         )}
       </ul>
@@ -406,7 +454,9 @@ export default function TodoApp() {
           color: '#94a3b8',
         }}
       >
-        <span id='count'>{activeTasksCount}</span> {activeTasksCount === 1 ? 'item' : 'items'} left • Double-click a task to edit
+        <span id='count'>{activeTasksCount}</span>{' '}
+        {activeTasksCount === 1 ? 'item' : 'items'} left • Double-click a task
+        to edit
       </footer>
     </div>
   )
