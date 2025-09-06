@@ -18,7 +18,7 @@ export default function HomePage() {
       id: 3,
       title: "Portfolio Website",
       description: "My personal portfolio with animations and responsive design.",
-      link: "/projects/portfolio",
+      link: "/Weather",
     },
   ];
 

@@ -76,6 +76,7 @@ const TaskItem = React.memo(({ task, onToggle, onDelete, onEdit }) => {
           ✅
         </button>
         <button
+          onMouseDown={(e) => e.preventDefault()} // جلوی blur گرفتن
           onClick={handleCancel}
           type='button'
           style={{

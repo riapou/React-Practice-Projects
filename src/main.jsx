@@ -4,6 +4,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import App from './App.jsx'
 import Todo from './components/Todo.jsx'
 import Counter from './components/Counter.jsx'
+import Weather from './components/Weather.jsx'
+import Movie from './components/Movie.jsx'
 import './index.css'
 
 createRoot(document.getElementById('root')).render(
@@ -13,7 +15,8 @@ createRoot(document.getElementById('root')).render(
         <Route index element={<App />} />
         <Route path='/todo' element={<Todo />} />
         <Route path='/counter' element={<Counter />} />
-        <Route path='/todo' element={<Todo />} />
+        <Route path='/weather' element={<Weather />} />
+        <Route path='/movie' element={<Movie />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
