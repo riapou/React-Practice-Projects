@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 export default function Counter() {
   const [count, setCount] = useState(0)
-  
+
   // Button styles as a constant to avoid recreation on each render
   const buttonStyle = {
     padding: '10px 20px',
@@ -12,35 +12,38 @@ export default function Counter() {
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    minWidth: '80px'
+    minWidth: '80px',
   }
-  
+
   // Handler functions with useCallback to prevent unnecessary re-renders
   const decrement = useCallback(() => {
-    setCount(c => (c > 0 ? c - 1 : 0))
+    setCount((c) => (c > 0 ? c - 1 : 0))
   }, [])
-  
+
   const increment = useCallback(() => {
-    setCount(c => c + 1)
+    setCount((c) => c + 1)
   }, [])
-  
+
   const reset = useCallback(() => {
     setCount(0)
   }, [])
-  
+
   // Keyboard support
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'ArrowDown') {
-      decrement()
-    } else if (e.key === 'ArrowUp') {
-      increment()
-    } else if (e.key === 'Escape') {
-      reset()
-    }
-  }, [decrement, increment, reset])
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'ArrowDown') {
+        decrement()
+      } else if (e.key === 'ArrowUp') {
+        increment()
+      } else if (e.key === 'Escape') {
+        reset()
+      }
+    },
+    [decrement, increment, reset]
+  )
 
   return (
-    <div 
+    <div
       style={{
         textAlign: 'center',
         background: 'white',
@@ -49,25 +52,27 @@ export default function Counter() {
         boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
         maxWidth: '400px',
         margin: '50px auto',
-        fontFamily: 'system-ui, sans-serif'
+        fontFamily: 'system-ui, sans-serif',
       }}
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
       <h1 style={{ marginBottom: '20px', color: '#333' }}>Counter App</h1>
-      <div 
-        style={{ 
-          fontSize: '3rem', 
-          margin: '20px 0', 
+      <div
+        style={{
+          fontSize: '3rem',
+          margin: '20px 0',
           fontWeight: 'bold',
-          color: count === 0 ? '#888' : '#333'
+          color: count === 0 ? '#888' : '#333',
         }}
-        aria-live="polite"
-        aria-atomic="true"
+        aria-live='polite'
+        aria-atomic='true'
       >
         {count}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <div
+        style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}
+      >
         <button
           onClick={decrement}
           onMouseDown={(e) => {
@@ -87,7 +92,7 @@ export default function Counter() {
             background: '#f44336',
             color: 'white',
           }}
-          aria-label="Decrement counter"
+          aria-label='Decrement counter'
         >
           -
         </button>
@@ -110,7 +115,7 @@ export default function Counter() {
             background: '#4CAF50',
             color: 'white',
           }}
-          aria-label="Increment counter"
+          aria-label='Increment counter'
         >
           +
         </button>
@@ -133,7 +138,7 @@ export default function Counter() {
             background: '#555',
             color: 'white',
           }}
-          aria-label="Reset counter"
+          aria-label='Reset counter'
         >
           Reset
         </button>
