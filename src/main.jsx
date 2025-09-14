@@ -9,6 +9,7 @@ import Movie from './components/Movie.jsx'
 import Quiz from './components/Quiz.jsx'
 import Notes from './components/Notes.jsx'
 import Timer from './components/Timer.jsx'
+import Test  from './components/Test.jsx'
 import './index.css'
 
 createRoot(document.getElementById('root')).render(
@@ -23,6 +24,7 @@ createRoot(document.getElementById('root')).render(
         <Route path='/movie' element={<Movie />} />
         <Route path='/notes' element={<Notes />} />
         <Route path='/timer' element={<Timer />} />
+        <Route path='/test' element={<Test />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
